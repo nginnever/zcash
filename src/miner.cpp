@@ -766,36 +766,86 @@ void GenerateBitcoins(bool fGenerate, CWallet* pwallet, int nThreads, GPUConfig 
   // If using GPU
   if(conf.useGPU) {
 
-      conf.currentPlatform =0;
+      conf.currentPlatform = 0;
       conf.currentDevice = conf.selGPU;
+
+      vector<cl::Platform> platforms = cl_gpuminer::getPlatforms();
 
       // use all available GPUs
       if(conf.allGPU) {
 
-            unsigned numPlatforms = cl_gpuminer::getNumPlatforms();
+            int devicesFound = 0;
+            unsigned numPlatforms = platforms.size();
 
             for(unsigned platform = 0; platform < numPlatforms; ++platform) {
 
-              unsigned noDevices = cl_gpuminer::getNumDevices(platform);
-
-              fprintf(stderr, "noDevices:%u", noDevices);
-
+              vector<cl::Device> devices = cl_gpuminer::getDevices(platforms, platform);
+              unsigned noDevices = devices.size();
+              devicesFound += noDevices;
               for(unsigned device = 0; device < noDevices; ++device) {
+
                   conf.currentPlatform = platform;
                   conf.currentDevice = device;
 
-                  // genproclimit, threads per gpu
-                  for (int i = 0; i < nThreads; i++)
+                  cl_ulong result;
+                  devices[device].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &result);
+             
+	          int maxThreads = nThreads;
+	          if (!conf.forceGenProcLimit) {
+	            if (result > 7500000000) {
+	              maxThreads = min(4, nThreads);
+	            } else if (result > 5500000000) {
+	              maxThreads = min(3, nThreads);
+	            } else if (result > 3500000000) {
+	              maxThreads = min(2, nThreads);
+	            } else {
+	              maxThreads = min(1, nThreads);
+        	    }
+	          }
+
+                  LogPrintf("ZcashMiner GPU[%d][%d] MemLimit: %s nThreads: %d\n", platform, device, to_string(result), maxThreads);
+
+                  for (int i = 0; i < maxThreads; i++)
                     minerThreads->create_thread(boost::bind(&BitcoinMiner, pwallet, conf));
 
               }
             }
 
+            if (devicesFound <= 0) {
+               LogPrintf("ZcashMiner ERROR, No OpenCL devices found!\n");
+            }
+
         } else {
 
-          // genproclimit, threads on single gpu
-          for (int i = 0; i < nThreads; i++)
-            minerThreads->create_thread(boost::bind(&BitcoinMiner, pwallet, conf));
+          // mine on specified GPU device
+          vector<cl::Device> devices = cl_gpuminer::getDevices(platforms, conf.currentPlatform);
+
+          if (devices.size() > conf.currentDevice) {
+
+            cl_ulong result;
+            devices[conf.currentDevice].getInfo(CL_DEVICE_GLOBAL_MEM_SIZE, &result);
+
+            int maxThreads = nThreads;
+            if (!conf.forceGenProcLimit) {
+              if (result > 7500000000) {
+                maxThreads = min(4, nThreads);
+              } else if (result > 5500000000) {
+                maxThreads = min(3, nThreads);
+              } else if (result > 3500000000) {
+                maxThreads = min(2, nThreads);
+              } else {
+                maxThreads = min(1, nThreads);
+              }
+            }
+
+            LogPrintf("ZcashMiner GPU[%d][%d] MemLimit: %s nThreads: %d\n", conf.currentPlatform, conf.currentDevice, to_string(result), maxThreads);
+
+            for (int i = 0; i < maxThreads; i++)
+              minerThreads->create_thread(boost::bind(&BitcoinMiner, pwallet, conf));
+
+          } else {
+             LogPrintf("ZcashMiner ERROR, No OpenCL devices found!\n");
+          }
 
         }
 
