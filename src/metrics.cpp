@@ -143,7 +143,7 @@ int printMetrics(size_t cols, int64_t nStart, bool mining)
     }
     std::string strDuration = strprintf(_("Since starting this node %s ago:"), duration);
     std::cout << strDuration << std::endl;
-    lines += (strDuration.size() / cols);
+    //lines += (strDuration.size() / cols);
 
     std::cout << "- " << strprintf(_("You have validated %d transactions!"), transactionsValidated.get()) << std::endl;
 
