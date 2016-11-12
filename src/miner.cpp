@@ -209,6 +209,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
 
                 dPriority += (double)nValueIn * nConf;
             }
+            nTotalIn += tx.GetJoinSplitValueIn();
+
             if (fMissingInputs) continue;
 
             // Priority is sum(valuein * age) / modified_txsize
@@ -339,16 +341,6 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn)
         txNew.vout[0].scriptPubKey = scriptPubKeyIn;
         txNew.vout[0].nValue = GetBlockSubsidy(nHeight, chainparams.GetConsensus());
 
-        if ((nHeight > 0) && (nHeight <= chainparams.GetConsensus().GetLastFoundersRewardBlockHeight())) {
-            // Founders reward is 20% of the block subsidy
-            auto vFoundersReward = txNew.vout[0].nValue / 5;
-            // Take some reward away from us
-            txNew.vout[0].nValue -= vFoundersReward;
-
-            // And give it to the founders
-            txNew.vout.push_back(CTxOut(vFoundersReward, chainparams.GetFoundersRewardScriptAtHeight(nHeight)));
-        }
-
         // Add fees
         txNew.vout[0].nValue += nFees;
         txNew.vin[0].scriptSig = CScript() << nHeight << OP_0;
@@ -440,7 +432,7 @@ static bool ProcessBlockFound(CBlock* pblock, CWallet& wallet, CReserveKey& rese
     if (!ProcessNewBlock(state, NULL, pblock, true, NULL))
         return error("ZcashMiner: ProcessNewBlock, block not accepted");
 
-    minedBlocks.increment();
+    TrackMinedBlock(pblock->GetHash());
 
     return true;
 }

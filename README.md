@@ -1,14 +1,38 @@
-Zcash 1.0.0
-===========
+Zclassic 1.0.1
+==============
+
+What is Zclassic
+----------------
+Zclassic is a Zcash fork with no 20% Founders Tax.
+
+Get dependencies:
+```{r, engine='bash'}
+
+sudo apt-get install \
+      build-essential pkg-config libc6-dev m4 g++-multilib \
+      autoconf libtool ncurses-dev unzip git python \
+      zlib1g-dev wget bsdmainutils automake
+```
+
+Install
+```{r, engine='bash'}
+# Build
+./zcutil/build.sh -j$(nproc)
+# fetch key
+./zcutil/fetch-params.sh
+# Run
+./src/zcashd
+```
+
 
 What is Zcash?
 --------------
 
 [Zcash](https://z.cash/) is an implementation of the "Zerocash" protocol.
 Based on Bitcoin's code, it intends to offer a far higher standard of privacy
-and anonymity through a sophisticated zero-knowledge proving scheme that
-preserves confidentiality of transaction metadata. Technical details are
-available in our [Protocol Specification](https://github.com/zcash/zips/raw/master/protocol/protocol.pdf).
+through a sophisticated zero-knowledge proving scheme that preserves
+confidentiality of transaction metadata. Technical details are available
+in our [Protocol Specification](https://github.com/zcash/zips/raw/master/protocol/protocol.pdf).
 
 This software is the Zcash client. It downloads and stores the entire history
 of Zcash transactions; depending on the speed of your computer and network
@@ -25,9 +49,8 @@ See important security warnings in
 
 Where do I begin?
 -----------------
-
-We have a guide for joining the public testnet:
-https://github.com/zcash/zcash/wiki/Beta-Guide
+We have a guide for joining the main Zcash network:
+https://github.com/zcash/zcash/wiki/1.0-User-Guide
 
 ### Need Help?
 
@@ -42,7 +65,7 @@ Building
 --------
 
 Build Zcash along with most dependencies from source by running
-./zcutil/build.sh. Currently only Linux is supported.
+./zcutil/build.sh. Currently only Linux is officially supported.
 
 License
 -------
