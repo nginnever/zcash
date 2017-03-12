@@ -36,6 +36,8 @@ unsigned cl_gpuminer::s_msPerBatch = cl_gpuminer::c_defaultMSPerBatch;
 unsigned cl_gpuminer::s_workgroupSize = cl_gpuminer::c_defaultLocalWorkSize;
 unsigned cl_gpuminer::s_initialGlobalWorkSize = cl_gpuminer::c_defaultGlobalWorkSizeMultiplier * cl_gpuminer::c_defaultLocalWorkSize;
 
+#ifdef DEBUG
+
 #if defined(_WIN32)
 extern "C" __declspec(dllimport) void __stdcall OutputDebugStringA(const char* lpOutputString);
 static std::atomic_flag s_logSpin = ATOMIC_FLAG_INIT;
@@ -51,6 +53,12 @@ static std::atomic_flag s_logSpin = ATOMIC_FLAG_INIT;
 	} while (false)
 #else
 #define CL_LOG(_contents) cout << "[OPENCL]:" << _contents << endl
+#endif
+
+#else
+
+#define CL_LOG(_contents) do{} while(false)
+
 #endif
 
 // Types of OpenCL devices we are interested in
